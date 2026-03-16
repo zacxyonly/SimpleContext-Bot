@@ -139,7 +139,7 @@ def main():
         prog="simplecontext-bot",
         description="🧠 SimpleContext-Bot — AI Telegram Bot powered by SimpleContext",
     )
-    parser.add_argument("--version", action="version", version="%(prog)s 1.2.0")
+    parser.add_argument("--version", action="version", version="%(prog)s 1.2.1")
     subparsers = parser.add_subparsers(dest="command", help="Command to run")
 
     # setup

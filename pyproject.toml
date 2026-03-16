@@ -1,0 +1,46 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "simplecontext-bot"
+version = "1.2.1"
+description = "AI Telegram Bot powered by SimpleContext — one-command setup, auto-downloads engine and agents."
+readme = "README.md"
+license = { text = "MIT" }
+authors = [{ name = "zacxyonly" }]
+requires-python = ">=3.10"
+dependencies = [
+  "python-telegram-bot>=21.0",
+  "litellm>=1.40.0",
+]
+
+keywords = [
+  "telegram", "bot", "ai", "chatbot", "simplecontext",
+  "llm", "gemini", "openai", "ollama", "agent", "memory"
+]
+
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "License :: OSI Approved :: MIT License",
+  "Operating System :: OS Independent",
+  "Topic :: Communications :: Chat",
+  "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+
+[project.scripts]
+simplecontext-bot = "simplecontext_bot.cli:main"
+
+[project.urls]
+Homepage      = "https://github.com/zacxyonly/SimpleContext-Bot"
+Documentation = "https://zacxyonly.github.io/SimpleContext-Docs/bot/setup/"
+Repository    = "https://github.com/zacxyonly/SimpleContext-Bot"
+Issues        = "https://github.com/zacxyonly/SimpleContext-Bot/issues"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["simplecontext_bot*"]
