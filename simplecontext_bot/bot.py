@@ -214,7 +214,7 @@ def run():
 
     # ── Load semua plugin (auto-scan, tidak tergantung registry) ──────────────
     loaded_plugins  = _load_all_plugins(sc, install_dir)
-    dynamic_commands = _collect_bot_commands(loaded_plugins)
+    dynamic_commands = _collect_app_commands(sc)
 
     # Inject app_info ke semua plugin — mereka bisa tahu platform & versi bot
     sc._plugins.set_app_info({"platform": "telegram", "version": "1.2.0"})
