@@ -10,6 +10,7 @@ Setup wizard · Auto-routing agents · Works with Gemini, OpenAI, Ollama</p>
 [![License](https://img.shields.io/badge/License-MIT-yellow?style=flat-square)](LICENSE)
 [![SimpleContext](https://img.shields.io/badge/Powered%20by-SimpleContext%20v4.2-blueviolet?style=flat-square)](https://github.com/zacxyonly/SimpleContext)
 [![Plugins](https://img.shields.io/badge/Plugins-SimpleContext--Plugin-orange?style=flat-square)](https://github.com/zacxyonly/SimpleContext-Plugin)
+[![Dynamic Plugins](https://img.shields.io/badge/Plugins-Dynamic%20Auto--Load-brightgreen?style=flat-square)]()
 
 </div>
 
@@ -153,28 +154,56 @@ SimpleContext-Bot dapat diperluas dengan plugin dari [SimpleContext-Plugin](http
 |--------|-----------|-----------|
 | [`vector-search`](https://github.com/zacxyonly/SimpleContext-Plugin/tree/main/official/plugin-vector-search) | Semantic similarity search — temukan memory berdasarkan makna, bukan kata persis | ✅ |
 
-### Install plugin
+### Cara install plugin
 
-**Saat setup wizard** — wizard akan menawarkan plugin secara otomatis di Step 3.
+**Saat setup wizard** — wizard menawarkan plugin di Step 3.
 
-**Setelah setup:**
+**Setelah setup — via CLI:**
 ```bash
-# List semua plugin
-simplecontext-bot plugins list
-
-# Install plugin
 simplecontext-bot plugins install vector-search
-
-# Hapus plugin
-simplecontext-bot plugins remove vector-search
 ```
 
-### Demo plugin via bot
+**Manual (plugin komunitas):**
+Cukup drop file `.py` ke folder `~/.simplecontext-bot/plugins/` lalu restart bot.
+Bot akan **auto-detect dan load** semua plugin di folder tersebut — termasuk plugin
+komunitas dari [SimpleContext-Plugin](https://github.com/zacxyonly/SimpleContext-Plugin)
+atau plugin buatan sendiri.
+
+```bash
+# Contoh: install plugin komunitas secara manual
+cp my_custom_plugin.py ~/.simplecontext-bot/plugins/
+simplecontext-bot start   # plugin langsung aktif
+```
+
+### Plugin commands — auto-register ke Telegram
+
+Plugin bisa mendeklarasikan command sendiri via `BOT_COMMANDS`. Bot otomatis
+mendaftarkannya ke Telegram — tidak perlu ubah kode bot sama sekali.
+
+```python
+# Di file plugin kamu:
+class MyPlugin(BasePlugin):
+    BOT_COMMANDS = {
+        "mycommand": {
+            "description": "Deskripsi command",
+            "usage":       "/mycommand <arg>",
+            "handler":     "bot_cmd_mycommand",   # nama method di class ini
+        }
+    }
+
+    async def bot_cmd_mycommand(self, sc, update, ctx, args):
+        return f"Kamu kirim: {' '.join(args)}"
+```
+
+Setelah bot restart, `/mycommand` langsung tersedia di Telegram — muncul di
+menu command dan terdaftar di `/help` secara otomatis.
 
 ```
 /plugins
-→ ✅ Vector Search — Semantic similarity search
-→ Install lebih banyak di: SimpleContext-Plugin
+→ ✅ vector_search_plugin v1.0.0
+→    Semantic vector search berbasis embedding
+→    • /semantic — Cari memory berdasarkan makna
+→       Usage: /semantic <query>
 
 /semantic kenangan liburan
 → 1. [Semantic | █████ 84%] user suka pantai dan hiking ...
