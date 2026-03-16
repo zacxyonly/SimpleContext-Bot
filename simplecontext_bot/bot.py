@@ -258,20 +258,20 @@ def run():
             plugin_block = "\n\n🔌 *Active plugins:*\n" + "\n".join(plugin_lines)
 
         await update.message.reply_text(
-            f"👋 Hello *{user.first_name}*\\!\n\n"
-            f"I'm powered by *SimpleContext* — an AI brain with memory\\.\n\n"
+            f"👋 Hello *{user.first_name}*!\n\n"
+            f"I'm powered by *SimpleContext* — an AI brain with memory.\n\n"
             f"🤖 *Available agents:*\n{agents_list}"
             f"{plugin_block}\n\n"
-            f"Use /plugins to see plugin details\\.",
-            parse_mode="MarkdownV2"
+            f"Use /plugins to see plugin details.",
+            parse_mode="Markdown"
         )
 
     async def cmd_help(update: Update, ctx):
         static_cmds = (
             "/start — Welcome message\n"
             "/agents — List all agents\n"
-            "/agent \\<name\\> — Switch agent\n"
-            "/agent auto — Back to auto\\-routing\n"
+            "/agent <name> — Switch agent\n"
+            "/agent auto — Back to auto-routing\n"
             "/clear — Clear conversation history\n"
             "/status — Current status\n"
             "/memory — Your saved profile\n"
@@ -289,7 +289,7 @@ def run():
 
         await update.message.reply_text(
             "📖 *Commands:*\n\n" + static_cmds + dynamic_cmd_lines,
-            parse_mode="MarkdownV2"
+            parse_mode="Markdown"
         )
 
     async def cmd_agents(update: Update, ctx):
@@ -326,7 +326,7 @@ def run():
 
     async def cmd_clear(update: Update, ctx):
         sc.memory(update.effective_user.id).clear()
-        await update.message.reply_text("🗑 Conversation cleared\\. Profile kept\\.", parse_mode="MarkdownV2")
+        await update.message.reply_text("🗑 Conversation cleared. Profile kept.", parse_mode="Markdown")
 
     async def cmd_status(update: Update, ctx):
         uid    = update.effective_user.id
