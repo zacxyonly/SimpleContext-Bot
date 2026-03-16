@@ -17,8 +17,13 @@ LLM_PROVIDERS = {
     "1": {
         "name": "Gemini (Google)",
         "provider": "gemini",
-        "models": ["gemini/gemini-2.0-flash", "gemini/gemini-1.5-flash", "gemini/gemini-1.5-pro"],
-        "default_model": "gemini/gemini-2.0-flash",
+        "models": [
+            "gemini/gemini-2.5-flash",
+            "gemini/gemini-2.5-pro",
+            "gemini/gemini-3-flash-preview",
+            "gemini/gemini-3.1-flash-lite-preview",
+        ],
+        "default_model": "gemini/gemini-2.5-flash",
         "key_url": "https://aistudio.google.com/app/apikey",
         "key_label": "Gemini API Key",
         "free_tier": True,
@@ -38,10 +43,13 @@ LLM_PROVIDERS = {
         "models": ["llama3", "mistral", "phi3", "gemma"],
         "default_model": "llama3",
         "key_url": "https://ollama.ai",
-        "key_label": None,  # tidak butuh key
+        "key_label": None,
         "free_tier": True,
     },
 }
+
+# Sentinel untuk custom model input
+_CUSTOM_MODEL = "__custom__"
 
 
 def _print_header():
@@ -160,11 +168,22 @@ def run_wizard():
 
     cfg.set_value("llm.provider", provider_info["provider"])
 
-    # Model selection
+    # Model selection — dengan opsi custom input
     print(f"\n  Available {provider_info['name']} models:")
     model_choices = {str(i+1): m for i, m in enumerate(provider_info["models"])}
+    # Tambahkan opsi custom di akhir
+    custom_key = str(len(provider_info["models"]) + 1)
+    model_choices[custom_key] = "Custom (type your own model name)"
+
     model_choice = _ask_choice("Select model:", model_choices, default="1")
-    selected_model = provider_info["models"][int(model_choice) - 1]
+
+    if model_choice == custom_key:
+        # User pilih custom — minta input manual
+        print(f"\n  Enter model name (e.g. gemini/gemini-exp-1206, gpt-4-turbo, ollama/llama3.2):")
+        selected_model = _ask("  Model name")
+    else:
+        selected_model = provider_info["models"][int(model_choice) - 1]
+
     cfg.set_value("llm.model", selected_model)
 
     # API Key
