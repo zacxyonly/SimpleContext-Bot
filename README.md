@@ -8,7 +8,8 @@ Setup wizard · Auto-routing agents · Works with Gemini, OpenAI, Ollama</p>
 [![Python](https://img.shields.io/badge/Python-3.10%2B-blue?style=flat-square&logo=python&logoColor=white)](https://python.org)
 [![Telegram](https://img.shields.io/badge/Telegram-Bot-2CA5E0?style=flat-square&logo=telegram)](https://telegram.org)
 [![License](https://img.shields.io/badge/License-MIT-yellow?style=flat-square)](LICENSE)
-[![SimpleContext](https://img.shields.io/badge/Powered%20by-SimpleContext%20v4.1-blueviolet?style=flat-square)](https://github.com/zacxyonly/SimpleContext)
+[![SimpleContext](https://img.shields.io/badge/Powered%20by-SimpleContext%20v4.2-blueviolet?style=flat-square)](https://github.com/zacxyonly/SimpleContext)
+[![Plugins](https://img.shields.io/badge/Plugins-SimpleContext--Plugin-orange?style=flat-square)](https://github.com/zacxyonly/SimpleContext-Plugin)
 
 </div>
 
@@ -41,11 +42,12 @@ simplecontext-bot setup
 The wizard will handle everything:
 
 ```
-Step 1/5  Download SimpleContext engine from GitHub   ✅
-Step 2/5  Download 9 agent definitions                ✅
-Step 3/5  Telegram Bot Token                          → paste from @BotFather
-Step 4/5  LLM Provider & API Key                      → choose Gemini/OpenAI/Ollama
-Step 5/5  Final configuration                         ✅ Done!
+Step 1/6  Download SimpleContext engine from GitHub   ✅
+Step 2/6  Download 9 agent definitions                ✅
+Step 3/6  Plugin Ecosystem (Optional)                 → pilih plugin yang diinginkan
+Step 4/6  Telegram Bot Token                          → paste from @BotFather
+Step 5/6  LLM Provider & API Key                      → choose Gemini/OpenAI/Ollama
+Step 6/6  Final configuration                         ✅ Done!
 ```
 
 ### 3. Start
@@ -84,6 +86,7 @@ simplecontext-bot start
 |---|---|---|
 | **SimpleContext** | [→](https://github.com/zacxyonly/SimpleContext) | AI brain — tiered memory, context scoring, intent planning |
 | **SimpleContext-Agents** | [→](https://github.com/zacxyonly/SimpleContext-Agents) | 9 ready-to-use agent definitions |
+| **SimpleContext-Plugin** | [→](https://github.com/zacxyonly/SimpleContext-Plugin) | Official plugin registry — extend bot capabilities |
 | **LiteLLM** | pip | Universal LLM connector |
 
 ---
@@ -134,13 +137,56 @@ No need to manually switch agents. The bot detects the best agent for every mess
 | `/clear` | Clear conversation history |
 | `/status` | Show current agent and stats |
 | `/memory` | Show your saved profile |
+| `/plugins` | List installed plugins & available plugins |
+| `/semantic <query>` | Search memory by meaning (requires vector-search plugin) |
+
+---
+
+
+## 🔌 Plugin Ecosystem
+
+SimpleContext-Bot dapat diperluas dengan plugin dari [SimpleContext-Plugin](https://github.com/zacxyonly/SimpleContext-Plugin).
+
+### Plugin yang tersedia
+
+| Plugin | Deskripsi | Tested ✅ |
+|--------|-----------|-----------|
+| [`vector-search`](https://github.com/zacxyonly/SimpleContext-Plugin/tree/main/official/plugin-vector-search) | Semantic similarity search — temukan memory berdasarkan makna, bukan kata persis | ✅ |
+
+### Install plugin
+
+**Saat setup wizard** — wizard akan menawarkan plugin secara otomatis di Step 3.
+
+**Setelah setup:**
+```bash
+# List semua plugin
+simplecontext-bot plugins list
+
+# Install plugin
+simplecontext-bot plugins install vector-search
+
+# Hapus plugin
+simplecontext-bot plugins remove vector-search
+```
+
+### Demo plugin via bot
+
+```
+/plugins
+→ ✅ Vector Search — Semantic similarity search
+→ Install lebih banyak di: SimpleContext-Plugin
+
+/semantic kenangan liburan
+→ 1. [Semantic | █████ 84%] user suka pantai dan hiking ...
+→ 2. [Episodic | ███░░ 67%] sesi kemarin bahas rencana trip ...
+```
 
 ---
 
 ## ⚙️ CLI Commands
 
 ```bash
-simplecontext-bot setup                # First-time setup wizard
+simplecontext-bot setup                # First-time setup wizard (includes plugin selection)
 simplecontext-bot start                # Start the bot
 simplecontext-bot start --debug        # Start with verbose logging
 simplecontext-bot status               # Show configuration
@@ -149,6 +195,9 @@ simplecontext-bot agents               # List installed agents
 simplecontext-bot update               # Update engine + agents
 simplecontext-bot update --engine-only # Update engine only
 simplecontext-bot update --agents-only # Update agents only
+simplecontext-bot plugins list         # List all plugins
+simplecontext-bot plugins install <id> # Install a plugin
+simplecontext-bot plugins remove <id>  # Remove a plugin
 ```
 
 ---
@@ -162,10 +211,12 @@ Everything is stored in `~/.simplecontext-bot/`:
 ├── config.json        ← your settings (tokens, LLM config)
 ├── bot.db             ← conversation memory (SQLite)
 ├── simplecontext/     ← SimpleContext engine (auto-downloaded)
-└── agents/            ← agent YAML files (auto-downloaded)
-    ├── coding.yaml
-    ├── devops.yaml
-    └── ...
+├── agents/            ← agent YAML files (auto-downloaded)
+│   ├── coding.yaml
+│   ├── devops.yaml
+│   └── ...
+└── plugins/           ← installed plugins (auto-downloaded via wizard)
+    └── vector_search_plugin.py
 ```
 
 ---
@@ -192,11 +243,12 @@ simplecontext-bot setup
 
 ## 🔗 Ecosystem
 
-```
-SimpleContext          ←  🧠  AI Brain engine
-SimpleContext-Agents   ←  🤖  Agent definitions
-SimpleContext-Bot      ←  🚀  This repo — Telegram bot
-```
+| Repositori | Deskripsi |
+|------------|----------|
+| [SimpleContext](https://github.com/zacxyonly/SimpleContext) | Core engine — Universal AI Brain |
+| [SimpleContext-Plugin](https://github.com/zacxyonly/SimpleContext-Plugin) | Plugin registry — extend with semantic search, summarizer, and more |
+| [SimpleContext-Bot](https://github.com/zacxyonly/SimpleContext-Bot) | This repo — Telegram Bot |
+| [SimpleContext-Agents](https://github.com/zacxyonly/SimpleContext-Agents) | Ready-to-use agent definitions |
 
 ---
 

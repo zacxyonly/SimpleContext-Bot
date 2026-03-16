@@ -34,6 +34,11 @@ DEFAULT_CONFIG = {
         "hot_reload": True,
         "default_agent": "general",
     },
+    "plugins": {
+        "enabled": False,
+        "installed": [],
+        "configs": {}
+    },
     "bot": {
         "debug": False,
         "memory_limit": 20,

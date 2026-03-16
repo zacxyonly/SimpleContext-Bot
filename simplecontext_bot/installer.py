@@ -12,8 +12,26 @@ import urllib.error
 from pathlib import Path
 
 # GitHub release URLs
-ENGINE_URL = "https://github.com/zacxyonly/SimpleContext/archive/refs/heads/main.zip"
-AGENTS_URL = "https://github.com/zacxyonly/SimpleContext-Agents/archive/refs/heads/main.zip"
+ENGINE_URL  = "https://github.com/zacxyonly/SimpleContext/archive/refs/heads/main.zip"
+AGENTS_URL  = "https://github.com/zacxyonly/SimpleContext-Agents/archive/refs/heads/main.zip"
+PLUGINS_URL = "https://github.com/zacxyonly/SimpleContext-Plugin/archive/refs/heads/main.zip"
+
+# Registry plugin resmi
+OFFICIAL_PLUGINS = {
+    "vector-search": {
+        "label":       "Vector Search",
+        "description": "Semantic similarity search — temukan memory berdasarkan makna, bukan kata persis",
+        "file":        "vector_search_plugin.py",
+        "source_path": "official/plugin-vector-search/vector_search_plugin.py",
+        "config": {
+            "provider":         "local",
+            "top_k":            5,
+            "min_score":        0.15,
+            "inject_as_system": True,
+            "tiers":            ["semantic", "episodic"],
+        },
+    },
+}
 
 
 def download_file(url: str, dest: Path, label: str = ""):
@@ -191,3 +209,103 @@ def get_installed_agents(install_dir: Path) -> list[str]:
     if not agents_dir.exists():
         return []
     return [f.stem for f in agents_dir.glob("*.yaml")]
+
+
+def install_plugin(install_dir: Path, plugin_id: str) -> bool:
+    """
+    Download dan install satu plugin dari SimpleContext-Plugin registry.
+    Salin file .py plugin ke install_dir/plugins/.
+    """
+    plugin_info = OFFICIAL_PLUGINS.get(plugin_id)
+    if not plugin_info:
+        print(f"  ❌ Plugin '{plugin_id}' tidak ada di registry.")
+        return False
+
+    plugins_dir = install_dir / "plugins"
+    plugins_dir.mkdir(parents=True, exist_ok=True)
+
+    zip_path = install_dir / "_plugins.zip"
+    if not zip_path.exists():
+        if not download_file(PLUGINS_URL, zip_path, "SimpleContext-Plugin registry"):
+            return False
+
+    print(f"  📦 Installing {plugin_info['label']}...", end="", flush=True)
+    try:
+        tmp_dir = install_dir / "_tmp_plugins"
+        with zipfile.ZipFile(zip_path, "r") as zf:
+            zf.extractall(tmp_dir)
+
+        extracted_roots = list(tmp_dir.iterdir())
+        if not extracted_roots:
+            print(" ❌ Empty archive")
+            return False
+
+        source = extracted_roots[0] / plugin_info["source_path"]
+        if not source.exists():
+            print(f" ❌ File tidak ditemukan: {plugin_info['source_path']}")
+            return False
+
+        dest = plugins_dir / plugin_info["file"]
+        import shutil as _sh
+        _sh.copy2(source, dest)
+        print(" ✅")
+        return True
+
+    except Exception as e:
+        print(f" ❌ {e}")
+        return False
+    finally:
+        if (install_dir / "_tmp_plugins").exists():
+            import shutil as _sh
+            _sh.rmtree(install_dir / "_tmp_plugins")
+        # Hapus zip hanya setelah semua plugin selesai di-install
+        # (dipanggil oleh install_selected_plugins)
+
+
+def install_selected_plugins(install_dir: Path, plugin_ids: list[str]) -> dict[str, bool]:
+    """
+    Install beberapa plugin sekaligus. Hanya download zip sekali.
+    Return: {plugin_id: success}
+    """
+    if not plugin_ids:
+        return {}
+
+    results = {}
+    zip_path = install_dir / "_plugins.zip"
+
+    # Download zip plugin registry sekali saja
+    if not zip_path.exists():
+        if not download_file(PLUGINS_URL, zip_path, "SimpleContext-Plugin registry"):
+            return {pid: False for pid in plugin_ids}
+
+    for pid in plugin_ids:
+        results[pid] = install_plugin(install_dir, pid)
+
+    # Cleanup zip setelah semua selesai
+    if zip_path.exists():
+        zip_path.unlink()
+
+    return results
+
+
+def check_plugin(install_dir: Path, plugin_id: str) -> bool:
+    """Cek apakah plugin sudah terinstall."""
+    plugin_info = OFFICIAL_PLUGINS.get(plugin_id)
+    if not plugin_info:
+        return False
+    plugin_file = install_dir / "plugins" / plugin_info["file"]
+    return plugin_file.exists()
+
+
+def get_installed_plugins(install_dir: Path) -> list[str]:
+    """Return daftar plugin_id yang sudah terinstall."""
+    installed = []
+    for pid, info in OFFICIAL_PLUGINS.items():
+        if (install_dir / "plugins" / info["file"]).exists():
+            installed.append(pid)
+    return installed
+
+
+def get_plugin_config(plugin_id: str) -> dict:
+    """Return default config untuk plugin tertentu."""
+    return OFFICIAL_PLUGINS.get(plugin_id, {}).get("config", {})

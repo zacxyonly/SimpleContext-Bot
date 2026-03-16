@@ -9,6 +9,8 @@ from . import config as cfg
 from .installer import (
     install_engine, install_agents,
     check_engine, check_agents,
+    install_selected_plugins, get_installed_plugins,
+    check_plugin, OFFICIAL_PLUGINS,
 )
 from .config import DEFAULT_DIR
 
@@ -111,7 +113,7 @@ def run_wizard():
     _print_header()
 
     install_dir = Path(cfg.get("install_dir", str(cfg.DEFAULT_DIR)))
-    total_steps = 5
+    total_steps = 6
 
     # ── Step 1: Install Engine ────────────────────────────
     _step(1, total_steps, "Download SimpleContext Engine")
@@ -147,8 +149,38 @@ def run_wizard():
 
     cfg.set_value("simplecontext.agents_dir", str(install_dir / "agents"))
 
-    # ── Step 3: Telegram Token ────────────────────────────
-    _step(3, total_steps, "Telegram Bot Token")
+    # ── Step 3: Plugin Selection ──────────────────────────
+    _step(3, total_steps, "Plugin Ecosystem (Optional)")
+    print("  Extend your bot with official plugins from SimpleContext-Plugin.\n")
+
+    selected_plugins = []
+    if OFFICIAL_PLUGINS:
+        for pid, info in OFFICIAL_PLUGINS.items():
+            label = info["label"]
+            desc  = info["description"]
+            ans   = input(f"  Install {label}?\n  → {desc}\n  [y/N]: ").strip().lower()
+            if ans == "y":
+                selected_plugins.append(pid)
+
+    if selected_plugins:
+        print(f"\n  📥 Installing {len(selected_plugins)} plugin(s)...")
+        results = install_selected_plugins(install_dir, selected_plugins)
+        for pid, ok in results.items():
+            label = OFFICIAL_PLUGINS[pid]["label"]
+            print(f"  {"✅" if ok else "❌"} {label}")
+        # Simpan ke config
+        cfg.set_value("plugins.enabled", True)
+        cfg.set_value("plugins.installed", selected_plugins)
+        # Simpan config per plugin
+        from .installer import get_plugin_config
+        plugin_configs = {pid: get_plugin_config(pid) for pid in selected_plugins}
+        cfg.set_value("plugins.configs", plugin_configs)
+    else:
+        print("  ⏭  No plugins selected. You can install later with:")
+        print("  simplecontext-bot plugins install vector-search")
+
+    # ── Step 4: Telegram Token ────────────────────────────
+    _step(4, total_steps, "Telegram Bot Token")
     print("  Get your token from @BotFather on Telegram:")
     print("  1. Open Telegram → search @BotFather")
     print("  2. Send /newbot")
@@ -158,8 +190,8 @@ def run_wizard():
     cfg.set_value("telegram.token", token)
     print("  ✅ Token saved.")
 
-    # ── Step 4: LLM Provider ──────────────────────────────
-    _step(4, total_steps, "LLM Provider")
+    # ── Step 5: LLM Provider ──────────────────────────────
+    _step(5, total_steps, "LLM Provider")
     print("  Choose your AI model provider:\n")
 
     provider_choices = {k: v["name"] + (" ⭐ FREE" if v["free_tier"] else "") for k, v in LLM_PROVIDERS.items()}
@@ -200,8 +232,8 @@ def run_wizard():
 
     print(f"  ✅ LLM configured: {provider_info['name']} / {selected_model}")
 
-    # ── Step 5: Final Config ──────────────────────────────
-    _step(5, total_steps, "Final Configuration")
+    # ── Step 6: Final Config ──────────────────────────────
+    _step(6, total_steps, "Final Configuration")
 
     # Default agent
     from .installer import get_installed_agents
@@ -222,6 +254,13 @@ def run_wizard():
     print(f"\n  📁 Install dir:  {install_dir}")
     print(f"  🤖 LLM:          {provider_info['name']} / {selected_model}")
     print(f"  🧠 Agents:       {len(agents)} installed")
+    installed_now = get_installed_plugins(install_dir)
+    if installed_now:
+        from .installer import OFFICIAL_PLUGINS as _OP
+        labels = ", ".join(_OP[p]["label"] for p in installed_now if p in _OP)
+        print(f"  🔌 Plugins:      {len(installed_now)} installed ({labels})")
+    else:
+        print(f"  🔌 Plugins:      None (install later with: simplecontext-bot plugins install <name>)")
     print(f"\n  To start your bot:")
     print("  \033[1msimplecontext-bot start\033[0m")
     print()
