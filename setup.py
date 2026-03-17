@@ -5,7 +5,7 @@ with open("README.md", "r", encoding="utf-8") as f:
 
 setup(
     name         = "simplecontext-bot",
-    version      = "1.1.0",
+    version      = "1.3.0",
     author       = "zacxyonly",
     description  = "🧠 AI Telegram Bot powered by SimpleContext — setup wizard included",
     long_description = long_description,
