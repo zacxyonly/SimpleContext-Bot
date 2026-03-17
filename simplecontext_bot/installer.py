@@ -31,6 +31,48 @@ OFFICIAL_PLUGINS = {
             "tiers":            ["semantic", "episodic"],
         },
     },
+    "analytics": {
+        "label":       "Analytics",
+        "description": "Usage analytics — statistik pesan, agent, dan aktivitas per user",
+        "file":        "analytics_plugin.py",
+        "source_path": "official/plugin-analytics/analytics_plugin.py",
+        "config":      {"track_agents": True, "track_hours": True, "retention_days": 30},
+    },
+    "summarizer": {
+        "label":       "Summarizer",
+        "description": "Ringkasan otomatis percakapan ke episodic memory via LLM",
+        "file":        "summarizer_plugin.py",
+        "source_path": "official/plugin-summarizer/summarizer_plugin.py",
+        "config":      {"threshold": 20, "keep_last": 5, "language": "auto", "max_tokens": 300},
+    },
+    "web-search": {
+        "label":       "Web Search",
+        "description": "Pencarian internet real-time — DuckDuckGo (free), Bing, Google",
+        "file":        "web_search_plugin.py",
+        "source_path": "official/plugin-web-search/web_search_plugin.py",
+        "config":      {"provider": "duckduckgo", "max_results": 3, "auto_search": True, "cache_ttl": 300},
+    },
+    "translate": {
+        "label":       "Translate",
+        "description": "Penerjemah multi-bahasa — auto-detect bahasa user, 20+ bahasa",
+        "file":        "translate_plugin.py",
+        "source_path": "official/plugin-translate/translate_plugin.py",
+        "config":      {"provider": "llm", "agent_language": "en", "auto_detect": True},
+    },
+    "sentiment": {
+        "label":       "Sentiment",
+        "description": "Analisis sentimen user — adaptasi tone agent saat frustrasi",
+        "file":        "sentiment_plugin.py",
+        "source_path": "official/plugin-sentiment/sentiment_plugin.py",
+        "config":      {"negative_threshold": -0.3, "inject_on_negative": True, "window_messages": 5},
+    },
+    "rate-limiter": {
+        "label":       "Rate Limiter",
+        "description": "Batasi request per jam/hari, estimasi token dan biaya",
+        "file":        "rate_limiter_plugin.py",
+        "source_path": "official/plugin-rate-limiter/rate_limiter_plugin.py",
+        "config":      {"requests_per_hour": 20, "requests_per_day": 100, "estimate_tokens": True},
+    },
 }
 
 
@@ -309,3 +351,74 @@ def get_installed_plugins(install_dir: Path) -> list[str]:
 def get_plugin_config(plugin_id: str) -> dict:
     """Return default config untuk plugin tertentu."""
     return OFFICIAL_PLUGINS.get(plugin_id, {}).get("config", {})
+
+
+# ── Registry URL untuk fetch plugin list dinamis ──────────────────────────────
+PLUGIN_REGISTRY_URL = "https://raw.githubusercontent.com/zacxyonly/SimpleContext-Plugin/main/official"
+PLUGIN_INDEX_URL    = "https://api.github.com/repos/zacxyonly/SimpleContext-Plugin/contents/official"
+
+
+def fetch_available_plugins() -> dict[str, dict]:
+    """
+    Fetch daftar plugin yang tersedia dari GitHub repo SimpleContext-Plugin.
+    Scan folder official/ via GitHub API, baca metadata dari setiap plugin .py.
+    Fallback ke OFFICIAL_PLUGINS jika tidak ada koneksi.
+    Return: { "plugin-name": {"label", "description", "file", "source_path", "config"} }
+    """
+    import urllib.request
+    import urllib.error
+    import json as _json
+
+    try:
+        req  = urllib.request.Request(
+            PLUGIN_INDEX_URL,
+            headers={"Accept": "application/vnd.github.v3+json",
+                     "User-Agent": "SimpleContext-Bot/1.3"}
+        )
+        with urllib.request.urlopen(req, timeout=8) as resp:
+            contents = _json.loads(resp.read())
+
+        plugins = {}
+        for item in contents:
+            if item["type"] != "dir" or not item["name"].startswith("plugin-"):
+                continue
+
+            folder    = item["name"]
+            plugin_id = folder[len("plugin-"):]  # "plugin-vector-search" → "vector-search"
+
+            # Cek apakah ada entry di OFFICIAL_PLUGINS (metadata lokal lebih lengkap)
+            if plugin_id in OFFICIAL_PLUGINS:
+                plugins[plugin_id] = OFFICIAL_PLUGINS[plugin_id]
+                continue
+
+            # Plugin baru yang belum di OFFICIAL_PLUGINS — buat entry minimal
+            plugins[plugin_id] = {
+                "label":       folder,
+                "description": f"Plugin from SimpleContext-Plugin ({folder})",
+                "file":        f"{plugin_id.replace('-', '_')}_plugin.py",
+                "source_path": f"official/{folder}/{plugin_id.replace('-', '_')}_plugin.py",
+                "config":      {},
+            }
+
+        return plugins if plugins else OFFICIAL_PLUGINS
+
+    except Exception as e:
+        # Fallback ke registry lokal jika tidak ada koneksi
+        return OFFICIAL_PLUGINS
+
+
+def update_plugins(install_dir: Path) -> bool:
+    """Update semua plugin yang sudah terinstall ke versi terbaru."""
+    from . import config as cfg
+    installed_ids = cfg.get("plugins.installed", [])
+    if not installed_ids:
+        print("  ℹ️  No plugins installed to update.")
+        return True
+
+    print(f"  🔄 Updating {len(installed_ids)} plugin(s)...")
+    results = install_selected_plugins(install_dir, installed_ids)
+    ok = all(results.values())
+    for pid, success in results.items():
+        label = OFFICIAL_PLUGINS.get(pid, {}).get("label", pid)
+        print(f"  {'✅' if success else '❌'} {label}")
+    return ok
