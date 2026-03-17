@@ -15,6 +15,59 @@ from . import llm
 
 logger = logging.getLogger(__name__)
 
+# ── Message Formatting Helpers ────────────────────────────────────────────────
+
+_TG_MAX_LEN = 4096
+
+
+def _clean_md(text: str) -> str:
+    """Bersihkan Markdown agar aman untuk Telegram parse_mode=Markdown."""
+    import re
+    # "* item" gaya Gemini → "• item"
+    text = re.sub(r"(?m)^\*\s+", "• ", text)
+    # Hapus ** yang tidak dipasangkan
+    if text.count("**") % 2 != 0:
+        last = text.rfind("**")
+        text = text[:last] + text[last + 2:]
+    return text
+
+
+def _split_msg(text: str, max_len: int = _TG_MAX_LEN) -> list:
+    """Split teks panjang menjadi chunk yang aman untuk Telegram."""
+    if len(text) <= max_len:
+        return [text]
+    parts = []
+    remaining = text
+    while len(remaining) > max_len:
+        chunk = remaining[:max_len]
+        cut = max_len
+        for sep, off in [("\n\n", 2), ("\n", 1), (". ", 2), ("! ", 2), ("? ", 2)]:
+            pos = chunk.rfind(sep)
+            if pos > max_len // 2:
+                cut = pos + off
+                break
+        parts.append(remaining[:cut].rstrip())
+        remaining = remaining[cut:].lstrip()
+    if remaining:
+        parts.append(remaining)
+    return parts
+
+
+async def _send_reply(update, text: str, parse_mode: str = "Markdown"):
+    """Kirim reply: clean → split → fallback plain jika Markdown error."""
+    text   = _clean_md(text)
+    chunks = _split_msg(text)
+    for chunk in chunks:
+        try:
+            await update.message.reply_text(chunk, parse_mode=parse_mode)
+        except Exception:
+            try:
+                await update.message.reply_text(chunk)
+            except Exception as e:
+                import logging
+                logging.getLogger(__name__).error(f"Failed to send: {e}")
+
+
 
 def _load_simplecontext():
     install_dir = Path(cfg.get("install_dir"))
@@ -412,10 +465,7 @@ def run():
         else:
             reply = sc.process_response(uid, text, reply, result)
 
-        try:
-            await update.message.reply_text(reply, parse_mode="Markdown")
-        except Exception:
-            await update.message.reply_text(reply)
+        await _send_reply(update, reply)
 
     # ── Build & Register Handlers ─────────────────────────────────────────────
 
