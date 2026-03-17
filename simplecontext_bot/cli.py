@@ -437,6 +437,7 @@ def cmd_set(args):
         "simplecontext.default_agent": "Default agent name",
         "bot.debug":           "Debug mode (true|false)",
         "bot.memory_limit":    "Memory limit (integer)",
+        "bot.max_tokens":      "Max tokens per LLM response (default: 2048)",
     }
 
     if key not in allowed:
@@ -457,7 +458,7 @@ def cmd_set(args):
     actual_value = value
     if key in ("bot.debug",):
         actual_value = value.lower() in ("true", "1", "yes")
-    elif key in ("bot.memory_limit",):
+    elif key in ("bot.memory_limit", "bot.max_tokens"):
         try:
             actual_value = int(value)
         except ValueError:
@@ -603,6 +604,7 @@ def cmd_set(args):
         "simplecontext.default_agent": "Default agent name",
         "bot.debug":           "Debug mode (true|false)",
         "bot.memory_limit":    "Memory limit (integer)",
+        "bot.max_tokens":      "Max tokens per LLM response (default: 2048)",
     }
 
     if key not in allowed:
@@ -623,7 +625,7 @@ def cmd_set(args):
     actual_value = value
     if key in ("bot.debug",):
         actual_value = value.lower() in ("true", "1", "yes")
-    elif key in ("bot.memory_limit",):
+    elif key in ("bot.memory_limit", "bot.max_tokens"):
         try:
             actual_value = int(value)
         except ValueError:

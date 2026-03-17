@@ -253,6 +253,8 @@ def run():
 
     install_dir = Path(cfg.get("install_dir"))
 
+    max_tokens = cfg.get("bot.max_tokens", 2048)
+
     sc = SimpleContext(
         storage__backend      = "sqlite",
         storage__path         = cfg.get("simplecontext.db_path"),
@@ -451,7 +453,7 @@ def run():
         messages = sc.prepare_messages(uid, text, result)
         logger.info(f"[{user.username or uid}] → agent={result.agent_id}")
 
-        reply = llm.call(messages, max_tokens=1024)
+        reply = llm.call(messages, max_tokens=max_tokens)
 
         chain_rule = result.should_chain(text)
         if chain_rule and not reply.startswith("❌"):
@@ -459,7 +461,7 @@ def run():
             result2   = sc.router.chain(uid, text, reply, chain_rule,
                                         from_agent_id=result.agent_id)
             messages2 = sc.prepare_messages(uid, text, result2)
-            reply     = llm.call(messages2, max_tokens=1024)
+            reply     = llm.call(messages2, max_tokens=max_tokens)
             reply     = sc.process_response(uid, text, reply, result2,
                                             chain_from=result.agent_id)
         else:

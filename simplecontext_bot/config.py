@@ -42,6 +42,7 @@ DEFAULT_CONFIG = {
     "bot": {
         "debug": False,
         "memory_limit": 20,
+        "max_tokens":    2048,
         "compression_threshold": 50,
     }
 }
